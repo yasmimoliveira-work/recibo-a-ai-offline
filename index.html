@@ -1,83 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Recibo Digital</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+
+<h2>Recibo Digital</h2>
+
+<label>Data</label><br>
+<input type="date" id="data"><br><br>
+
+<label>Número do Lote</label><br>
+<input type="text" id="lote"><br><br>
+
+<label>Aldeia</label><br>
+<input type="text" id="aldeia"><br><br>
+
+<label>Região</label><br>
+<input type="text" id="regiao"><br><br>
+
+<label>Responsável pela Entrega</label><br>
+<input type="text" id="responsavel"><br><br>
+
+<label>Produtor</label><br>
+<input type="text" id="produtor"><br><br>
+
+<label>Quantidade (Sacas)</label><br>
+<input type="number" id="quantidade"><br><br>
+
+<label>Valor Recebido</label><br>
+<input type="number" id="valor"><br><br>
+
+<!-- ASSINATURA SIMPLIFICADA (ANDROID FRIENDLY) -->
+<label>Nome de quem recebeu</label><br>
+<input type="text" id="assinatura_nome"><br><br>
+
+<label>
+  <input type="checkbox" id="confirmacao">
+  Confirmo o recebimento das informações acima
+</label>
+<br><br>
+
+<button onclick="salvar()">Salvar Recibo (offline)</button>
+<br><br>
+<button onclick="sincronizar()">Sincronizar agora</button>
+
+<p id="status"></p>
+
 <script>
-  // URL DA API (GOOGLE APPS SCRIPT)
   const API_URL = "https://script.googleusercontent.com/a/macros/institutoiepe.org.br/echo?user_content_key=AehSKLjhc6ggCnp-JoB6h_oByTYBD96YBfrQe9DF-xwJtvxeG8kov_DneaPGh_ux8L1k4iCrwJJfKfPOIZdb_bdLjTe-M2BNd3oRHN2byvF8JKazP9CkuxShHcybvOAAyG89RPyL_3A5a8BctA4bt3WrHjNbg92nXTATHvMANPHiU9cvcKKbExuAqxml1A_6cKhshWWc2LF4ScrLKoyVmT3GYQp9M34EzHYinZwvbFFbkiHjWYSKBaqisjvk0-kVQ1iFq9xbdQ19mDSlNYzmt3UXCt5lgaAohOdrvLAYLc6Ir93kQhKKxtrUjwSJbWdqjw&lib=Mwpl13yBil3ay0bmPcM0_zUw9ezPKz0cG";
 
-  // SALVAR RECIBO (OFFLINE)
   function salvar() {
-    const nomeAssinatura = document.getElementById("assinatura_nome").value;
+    const nome = document.getElementById("assinatura_nome").value;
     const confirmou = document.getElementById("confirmacao").checked;
 
-    if (!nomeAssinatura || !confirmou) {
+    if (!nome || !confirmou) {
       alert("Informe o nome e confirme o recebimento.");
       return;
     }
 
     const recibo = {
-      data: document.getElementById("data").value,
-      numeroLote: document.getElementById("lote").value,
-      aldeia: document.getElementById("aldeia").value,
-      regiao: document.getElementById("regiao").value,
-      responsavelEntrega: document.getElementById("responsavel").value,
-      produtor: document.getElementById("produtor").value,
-      quantidade: document.getElementById("quantidade").value,
-      valorRecebido: document.getElementById("valor").value,
-      assinatura: nomeAssinatura,
-      confirmacao: "CONFIRMADO",
+      data: data.value,
+      numeroLote: lote.value,
+      aldeia: aldeia.value,
+      regiao: regiao.value,
+      responsavelEntrega: responsavel.value,
+      produtor: produtor.value,
+      quantidade: quantidade.value,
+      valorRecebido: valor.value,
+      assinatura: nome,
       status: "PENDENTE",
-      dataCriacao: new Date().toISOString()
+      criadoEm: new Date().toISOString()
     };
 
     const lista = JSON.parse(localStorage.getItem("recibos")) || [];
     lista.push(recibo);
     localStorage.setItem("recibos", JSON.stringify(lista));
 
-    document.getElementById("status").innerText =
-      "Recibo salvo no celular (offline)";
+    status.innerText = "Recibo salvo no celular (offline)";
   }
 
-  // SINCRONIZAR COM A PLANILHA
   async function sincronizar() {
     if (!navigator.onLine) {
-      document.getElementById("status").innerText = "Sem internet";
+      status.innerText = "Sem internet";
       return;
     }
 
     let lista = JSON.parse(localStorage.getItem("recibos")) || [];
-    let sincronizou = false;
+    let enviados = 0;
 
-    for (let i = 0; i < lista.length; i++) {
-      if (lista[i].status === "PENDENTE") {
-        try {
-          const resposta = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(lista[i])
-          });
-
-          const retorno = await resposta.json();
-
-          if (retorno.status === "ok") {
-            lista[i].status = "SINCRONIZADO";
-            lista[i].dataSincronizacao = new Date().toISOString();
-            sincronizou = true;
-          }
-        } catch (erro) {
-          console.error("Erro ao sincronizar", erro);
+    for (let r of lista) {
+      if (r.status === "PENDENTE") {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(r)
+        });
+        const json = await res.json();
+        if (json.status === "ok") {
+          r.status = "SINCRONIZADO";
+          enviados++;
         }
       }
     }
 
     localStorage.setItem("recibos", JSON.stringify(lista));
-
-    document.getElementById("status").innerText = sincronizou
+    status.innerText = enviados
       ? "Sincronização concluída"
       : "Nada para sincronizar";
   }
 </script>
 
 <script>
-  // REGISTRO DO SERVICE WORKER
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js");
   }
 </script>
+
+</body>
+</html>
