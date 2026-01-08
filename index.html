@@ -1,75 +1,83 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Teste Assinatura</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <style>
-    body {
-      padding: 20px;
-      font-family: Arial, sans-serif;
-    }
-
-    canvas {
-      border: 3px solid red;
-      width: 100%;
-      max-width: 350px;
-      height: 150px;
-      background: #fff;
-      touch-action: none;
-      display: block;
-    }
-  </style>
-</head>
-
-<body>
-
-<h2>TESTE DE ASSINATURA</h2>
-<p>Se aparecer um retângulo vermelho abaixo, está funcionando.</p>
-
-<canvas id="assinatura" width="350" height="150"></canvas>
-
-<button onclick="limpar()">Limpar</button>
-
 <script>
-  const canvas = document.getElementById("assinatura");
-  const ctx = canvas.getContext("2d");
-  let desenhando = false;
+  // URL DA API (GOOGLE APPS SCRIPT)
+  const API_URL = "https://script.googleusercontent.com/a/macros/institutoiepe.org.br/echo?user_content_key=AehSKLjhc6ggCnp-JoB6h_oByTYBD96YBfrQe9DF-xwJtvxeG8kov_DneaPGh_ux8L1k4iCrwJJfKfPOIZdb_bdLjTe-M2BNd3oRHN2byvF8JKazP9CkuxShHcybvOAAyG89RPyL_3A5a8BctA4bt3WrHjNbg92nXTATHvMANPHiU9cvcKKbExuAqxml1A_6cKhshWWc2LF4ScrLKoyVmT3GYQp9M34EzHYinZwvbFFbkiHjWYSKBaqisjvk0-kVQ1iFq9xbdQ19mDSlNYzmt3UXCt5lgaAohOdrvLAYLc6Ir93kQhKKxtrUjwSJbWdqjw&lib=Mwpl13yBil3ay0bmPcM0_zUw9ezPKz0cG";
 
-  ctx.lineWidth = 2;
-  ctx.lineCap = "round";
+  // SALVAR RECIBO (OFFLINE)
+  function salvar() {
+    const nomeAssinatura = document.getElementById("assinatura_nome").value;
+    const confirmou = document.getElementById("confirmacao").checked;
 
-  canvas.addEventListener("touchstart", e => {
-    e.preventDefault();
-    desenhando = true;
-    const t = e.touches[0];
-    ctx.beginPath();
-    ctx.moveTo(
-      t.clientX - canvas.getBoundingClientRect().left,
-      t.clientY - canvas.getBoundingClientRect().top
-    );
-  });
+    if (!nomeAssinatura || !confirmou) {
+      alert("Informe o nome e confirme o recebimento.");
+      return;
+    }
 
-  canvas.addEventListener("touchmove", e => {
-    e.preventDefault();
-    if (!desenhando) return;
-    const t = e.touches[0];
-    ctx.lineTo(
-      t.clientX - canvas.getBoundingClientRect().left,
-      t.clientY - canvas.getBoundingClientRect().top
-    );
-    ctx.stroke();
-  });
+    const recibo = {
+      data: document.getElementById("data").value,
+      numeroLote: document.getElementById("lote").value,
+      aldeia: document.getElementById("aldeia").value,
+      regiao: document.getElementById("regiao").value,
+      responsavelEntrega: document.getElementById("responsavel").value,
+      produtor: document.getElementById("produtor").value,
+      quantidade: document.getElementById("quantidade").value,
+      valorRecebido: document.getElementById("valor").value,
+      assinatura: nomeAssinatura,
+      confirmacao: "CONFIRMADO",
+      status: "PENDENTE",
+      dataCriacao: new Date().toISOString()
+    };
 
-  canvas.addEventListener("touchend", () => {
-    desenhando = false;
-  });
+    const lista = JSON.parse(localStorage.getItem("recibos")) || [];
+    lista.push(recibo);
+    localStorage.setItem("recibos", JSON.stringify(lista));
 
-  function limpar() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    document.getElementById("status").innerText =
+      "Recibo salvo no celular (offline)";
+  }
+
+  // SINCRONIZAR COM A PLANILHA
+  async function sincronizar() {
+    if (!navigator.onLine) {
+      document.getElementById("status").innerText = "Sem internet";
+      return;
+    }
+
+    let lista = JSON.parse(localStorage.getItem("recibos")) || [];
+    let sincronizou = false;
+
+    for (let i = 0; i < lista.length; i++) {
+      if (lista[i].status === "PENDENTE") {
+        try {
+          const resposta = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(lista[i])
+          });
+
+          const retorno = await resposta.json();
+
+          if (retorno.status === "ok") {
+            lista[i].status = "SINCRONIZADO";
+            lista[i].dataSincronizacao = new Date().toISOString();
+            sincronizou = true;
+          }
+        } catch (erro) {
+          console.error("Erro ao sincronizar", erro);
+        }
+      }
+    }
+
+    localStorage.setItem("recibos", JSON.stringify(lista));
+
+    document.getElementById("status").innerText = sincronizou
+      ? "Sincronização concluída"
+      : "Nada para sincronizar";
   }
 </script>
 
-</body>
-</html>
+<script>
+  // REGISTRO DO SERVICE WORKER
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js");
+  }
+</script>
