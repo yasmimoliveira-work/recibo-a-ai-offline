@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Recibo Offline</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+<h2>Recibo Digital</h2>
+
+<label>Data</label><br>
+<input type="date" id="data"><br><br>
+
+<label>Número do Lote</label><br>
+<input type="text" id="lote"><br><br>
+
+<label>Aldeia</label><br>
+<input type="text" id="aldeia"><br><br>
+
+<label>Região</label><br>
+<input type="text" id="regiao"><br><br>
+
+<label>Responsável pela Entrega</label><br>
+<input type="text" id="responsavel"><br><br>
+
+<label>Produtor</label><br>
+<input type="text" id="produtor"><br><br>
+
+<label>Quantidade (Sacas)</label><br>
+<input type="number" id="quantidade"><br><br>
+
+<label>Valor Recebido</label><br>
+<input type="number" id="valor"><br><br>
+
+<button onclick="salvar()">Salvar Recibo (Offline)</button>
+
+<p id="status"></p>
+
+<script>
+function salvar() {
+  let recibo = {
+    data: document.getElementById("data").value,
+    numeroLote: document.getElementById("lote").value,
+    aldeia: document.getElementById("aldeia").value,
+    regiao: document.getElementById("regiao").value,
+    responsavelEntrega: document.getElementById("responsavel").value,
+    produtor: document.getElementById("produtor").value,
+    quantidade: document.getElementById("quantidade").value,
+    valorRecebido: document.getElementById("valor").value,
+    status: "PENDENTE"
+  };
+
+  let lista = JSON.parse(localStorage.getItem("recibos")) || [];
+  lista.push(recibo);
+  localStorage.setItem("recibos", JSON.stringify(lista));
+
+  document.getElementById("status").innerText = "Recibo salvo (offline)";
+}
+</script>
+
+</body>
+</html>
+
