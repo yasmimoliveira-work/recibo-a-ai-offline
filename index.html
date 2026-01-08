@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<link rel="manifest" href="manifest.json">
 <head>
   <meta charset="UTF-8">
-  <title>Recibo Digital</title>
+  <title>Recibo Digital Offline</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
+
   <h2>Recibo Digital</h2>
 
   <label>Data</label><br>
@@ -34,6 +36,11 @@
   <label>Valor Recebido</label><br>
   <input type="number" id="valor"><br><br>
 
+  <label>Assinatura</label><br>
+  <canvas id="assinatura" width="300" height="150" style="border:1px solid #000;"></canvas><br>
+  <button onclick="limparAssinatura()">Limpar assinatura</button>
+  <br><br>
+
   <button onclick="salvar()">Salvar Recibo (offline)</button>
   <br><br>
   <button onclick="sincronizar()">Sincronizar agora</button>
@@ -44,6 +51,8 @@
     const API_URL = "https://script.googleusercontent.com/a/macros/institutoiepe.org.br/echo?user_content_key=AehSKLjhc6ggCnp-JoB6h_oByTYBD96YBfrQe9DF-xwJtvxeG8kov_DneaPGh_ux8L1k4iCrwJJfKfPOIZdb_bdLjTe-M2BNd3oRHN2byvF8JKazP9CkuxShHcybvOAAyG89RPyL_3A5a8BctA4bt3WrHjNbg92nXTATHvMANPHiU9cvcKKbExuAqxml1A_6cKhshWWc2LF4ScrLKoyVmT3GYQp9M34EzHYinZwvbFFbkiHjWYSKBaqisjvk0-kVQ1iFq9xbdQ19mDSlNYzmt3UXCt5lgaAohOdrvLAYLc6Ir93kQhKKxtrUjwSJbWdqjw&lib=Mwpl13yBil3ay0bmPcM0_zUw9ezPKz0cG";
 
     function salvar() {
+      const canvas = document.getElementById("assinatura");
+
       let recibo = {
         data: document.getElementById("data").value,
         numeroLote: document.getElementById("lote").value,
@@ -53,6 +62,7 @@
         produtor: document.getElementById("produtor").value,
         quantidade: document.getElementById("quantidade").value,
         valorRecebido: document.getElementById("valor").value,
+        assinatura: canvas.toDataURL(),
         status: "PENDENTE"
       };
 
@@ -78,34 +88,53 @@
             let resposta = await fetch(API_URL, {
               method: "POST",
               body: JSON.stringify(recibo),
-              headers: {
-                "Content-Type": "application/json"
-              }
+              headers: { "Content-Type": "application/json" }
             });
 
             let retorno = await resposta.json();
-
             if (retorno.status === "ok") {
               recibo.status = "SINCRONIZADO";
               enviado = true;
             }
-          } catch (e) {
-            console.error(e);
-          }
+          } catch (e) {}
         }
       }
 
       localStorage.setItem("recibos", JSON.stringify(lista));
-      document.getElementById("status").innerText = enviado
-        ? "Sincronização concluída"
-        : "Nada para sincronizar";
+      document.getElementById("status").innerText =
+        enviado ? "Sincronização concluída" : "Nada para sincronizar";
+    }
+
+    const canvas = document.getElementById("assinatura");
+    const ctx = canvas.getContext("2d");
+    let desenhando = false;
+
+    canvas.addEventListener("touchstart", e => {
+      desenhando = true;
+      const t = e.touches[0];
+      ctx.beginPath();
+      ctx.moveTo(t.clientX - canvas.offsetLeft, t.clientY - canvas.offsetTop);
+    });
+
+    canvas.addEventListener("touchmove", e => {
+      if (!desenhando) return;
+      const t = e.touches[0];
+      ctx.lineTo(t.clientX - canvas.offsetLeft, t.clientY - canvas.offsetTop);
+      ctx.stroke();
+    });
+
+    canvas.addEventListener("touchend", () => desenhando = false);
+
+    function limparAssinatura() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
   </script>
-<script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js")
-      .then(() => console.log("Service Worker registrado"))
-      .catch(err => console.error("Erro no SW", err));
-  }
-</script></body>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
+
+</body>
 </html>
