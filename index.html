@@ -69,66 +69,67 @@
 <p id="status"></p>
 
 <script>
-  const API_URL = "https://script.googleusercontent.com/a/macros/institutoiepe.org.br/echo?user_content_key=AehSKLjhc6ggCnp-JoB6h_oByTYBD96YBfrQe9DF-xwJtvxeG8kov_DneaPGh_ux8L1k4iCrwJJfKfPOIZdb_bdLjTe-M2BNd3oRHN2byvF8JKazP9CkuxShHcybvOAAyG89RPyL_3A5a8BctA4bt3WrHjNbg92nXTATHvMANPHiU9cvcKKbExuAqxml1A_6cKhshWWc2LF4ScrLKoyVmT3GYQp9M34EzHYinZwvbFFbkiHjWYSKBaqisjvk0-kVQ1iFq9xbdQ19mDSlNYzmt3UXCt5lgaAohOdrvLAYLc6Ir93kQhKKxtrUjwSJbWdqjw&lib=Mwpl13yBil3ay0bmPcM0_zUw9ezPKz0cG";
+const API_URL = "https://script.googleusercontent.com/a/macros/institutoiepe.org.br/echo?user_content_key=AehSKLjhc6ggCnp-JoB6h_oByTYBD96YBfrQe9DF-xwJtvxeG8kov_DneaPGh_ux8L1k4iCrwJJfKfPOIZdb_bdLjTe-M2BNd3oRHN2byvF8JKazP9CkuxShHcybvOAAyG89RPyL_3A5a8BctA4bt3WrHjNbg92nXTATHvMANPHiU9cvcKKbExuAqxml1A_6cKhshWWc2LF4ScrLKoyVmT3GYQp9M34EzHYinZwvbFFbkiHjWYSKBaqisjvk0-kVQ1iFq9xbdQ19mDSlNYzmt3UXCt5lgaAohOdrvLAYLc6Ir93kQhKKxtrUjwSJbWdqjw&lib=Mwpl13yBil3ay0bmPcM0_zUw9ezPKz0cG";
 
-  // Numeração automática
-  function gerarNumeroRecibo() {
-    let ultimo = localStorage.getItem("ultimoNumeroRecibo");
-    let proximo = ultimo ? parseInt(ultimo) + 1 : 1;
-    localStorage.setItem("ultimoNumeroRecibo", proximo);
-    return String(proximo).padStart(4, "0");
-  }
+/* ========= NUMERO DO RECIBO ========= */
+function gerarNumeroRecibo() {
+  let ultimo = localStorage.getItem("ultimoNumeroRecibo");
+  let proximo = ultimo ? parseInt(ultimo) + 1 : 1;
+  localStorage.setItem("ultimoNumeroRecibo", proximo);
+  return String(proximo).padStart(4, "0");
+}
 
-  // Assinatura
-  let canvas, ctx, desenhando = false;
+/* ========= ASSINATURA ========= */
+let canvas, ctx, desenhando = false;
 
-  window.onload = function () {
-    document.getElementById("numeroRecibo").value = gerarNumeroRecibo();
+window.addEventListener("load", () => {
+  numeroRecibo.value = gerarNumeroRecibo();
 
-    canvas = document.getElementById("assinaturaCanvas");
-    ctx = canvas.getContext("2d");
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
+  canvas = document.getElementById("assinaturaCanvas");
+  ctx = canvas.getContext("2d");
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
 
-    canvas.addEventListener("touchstart", iniciar);
-    canvas.addEventListener("touchmove", desenhar);
-    canvas.addEventListener("touchend", parar);
+  canvas.addEventListener("touchstart", iniciar);
+  canvas.addEventListener("touchmove", desenhar);
+  canvas.addEventListener("touchend", parar);
 
-    canvas.addEventListener("mousedown", iniciar);
-    canvas.addEventListener("mousemove", desenhar);
-    canvas.addEventListener("mouseup", parar);
-  };
+  canvas.addEventListener("mousedown", iniciar);
+  canvas.addEventListener("mousemove", desenhar);
+  canvas.addEventListener("mouseup", parar);
+});
 
-  function iniciar(e) {
-    desenhando = true;
-    ctx.beginPath();
-    const p = ponto(e);
-    ctx.moveTo(p.x, p.y);
-  }
+function iniciar(e) {
+  desenhando = true;
+  ctx.beginPath();
+  const p = ponto(e);
+  ctx.moveTo(p.x, p.y);
+}
 
-  function desenhar(e) {
-    if (!desenhando) return;
-    e.preventDefault();
-    const p = ponto(e);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-  }
+function desenhar(e) {
+  if (!desenhando) return;
+  e.preventDefault();
+  const p = ponto(e);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+}
 
-  function parar() {
-    desenhando = false;
-  }
+function parar() {
+  desenhando = false;
+}
 
-  function ponto(e) {
-    const rect = canvas.getBoundingClientRect();
-    const t = e.touches ? e.touches[0] : e;
-    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
-  }
+function ponto(e) {
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+}
 
-  function limparAssinatura() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
+function limparAssinatura() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
 
-  function salvar() {
+/* ========= SALVAR RECIBO ========= */
+function salvar() {
   if (!confirmacao.checked || !assinatura_nome.value) {
     alert("Informe o nome e confirme o recebimento.");
     return;
@@ -146,7 +147,8 @@
     valor: valor.value,
     assinaturaNome: assinatura_nome.value,
     assinaturaImagem: canvas.toDataURL(),
-    status: "PENDENTE"
+    status: "PENDENTE",
+    criadoEm: new Date().toISOString()
   };
 
   const lista = JSON.parse(localStorage.getItem("recibos")) || [];
@@ -155,67 +157,51 @@
 
   status.innerText = "Recibo salvo offline";
 
-  // ===== GERA QR CODE DO RECIBO =====
-  document.getElementById("qrcode").innerHTML = "";
-
+  /* ========= QR CODE ========= */
+  qrcode.innerHTML = "";
   const textoQR =
-    "Recibo Nº: " + numeroRecibo.value + "\n" +
-    "Data: " + data.value + "\n" +
-    "Produtor: " + produtor.value + "\n" +
-    "Valor: " + valor.value;
+    "Recibo Nº: " + recibo.numeroRecibo + "\n" +
+    "Data: " + recibo.data + "\n" +
+    "Produtor: " + recibo.produtor + "\n" +
+    "Valor: " + recibo.valor;
 
-  new QRCode(document.getElementById("qrcode"), {
+  new QRCode(qrcode, {
     text: textoQR,
     width: 150,
     height: 150
   });
 }
 
-
-    const recibo = {
-      numeroRecibo: numeroRecibo.value,
-      data: data.value,
-      lote: lote.value,
-      aldeia: aldeia.value,
-      regiao: regiao.value,
-      responsavel: responsavel.value,
-      produtor: produtor.value,
-      quantidade: quantidade.value,
-      valor: valor.value,
-      assinaturaNome: assinatura_nome.value,
-      assinaturaImagem: canvas.toDataURL(),
-      status: "PENDENTE"
-    };
-
-    const lista = JSON.parse(localStorage.getItem("recibos")) || [];
-    lista.push(recibo);
-    localStorage.setItem("recibos", JSON.stringify(lista));
-
-    status.innerText = "Recibo salvo offline";
+/* ========= SINCRONIZAR ========= */
+async function sincronizar() {
+  if (!navigator.onLine) {
+    status.innerText = "Sem internet";
+    return;
   }
 
-  async function sincronizar() {
-    if (!navigator.onLine) {
-      status.innerText = "Sem internet";
-      return;
-    }
+  let lista = JSON.parse(localStorage.getItem("recibos")) || [];
+  let enviados = 0;
 
-    let lista = JSON.parse(localStorage.getItem("recibos")) || [];
-    for (let r of lista) {
-      if (r.status === "PENDENTE") {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(r)
-        });
-        const j = await res.json();
-        if (j.status === "ok") r.status = "SINCRONIZADO";
+  for (let r of lista) {
+    if (r.status === "PENDENTE") {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(r)
+      });
+      const j = await res.json();
+      if (j.status === "ok") {
+        r.status = "SINCRONIZADO";
+        enviados++;
       }
     }
-    localStorage.setItem("recibos", JSON.stringify(lista));
-    status.innerText = "Sincronização concluída";
   }
+
+  localStorage.setItem("recibos", JSON.stringify(lista));
+  status.innerText = enviados ? "Sincronização concluída" : "Nada para sincronizar";
+}
 </script>
+
 
 </body>
 </html>
