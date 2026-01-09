@@ -4,15 +4,14 @@
   <meta charset="UTF-8">
   <title>Recibo Digital</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
 </head>
 
 <body>
 
 <h2>Recibo Digital</h2>
-
-<div style="border:2px solid red; padding:10px; margin:10px 0;">
-  TESTE VISUAL – SE VOCÊ VÊ ISSO, O HTML ATUALIZOU
-</div>
 
 <label>Número do Recibo</label><br>
 <input type="text" id="numeroRecibo" readonly><br><br>
@@ -48,6 +47,10 @@
         style="border:1px solid #000; touch-action:none;">
 </canvas><br>
 <button type="button" onclick="limparAssinatura()">Limpar assinatura</button>
+<br><br>
+
+<label>QR Code do Recibo</label><br>
+<div id="qrcode"></div>
 <br><br>
 
 <label>Nome de quem recebeu</label><br>
@@ -126,10 +129,48 @@
   }
 
   function salvar() {
-    if (!confirmacao.checked || !assinatura_nome.value) {
-      alert("Informe o nome e confirme o recebimento.");
-      return;
-    }
+  if (!confirmacao.checked || !assinatura_nome.value) {
+    alert("Informe o nome e confirme o recebimento.");
+    return;
+  }
+
+  const recibo = {
+    numeroRecibo: numeroRecibo.value,
+    data: data.value,
+    lote: lote.value,
+    aldeia: aldeia.value,
+    regiao: regiao.value,
+    responsavel: responsavel.value,
+    produtor: produtor.value,
+    quantidade: quantidade.value,
+    valor: valor.value,
+    assinaturaNome: assinatura_nome.value,
+    assinaturaImagem: canvas.toDataURL(),
+    status: "PENDENTE"
+  };
+
+  const lista = JSON.parse(localStorage.getItem("recibos")) || [];
+  lista.push(recibo);
+  localStorage.setItem("recibos", JSON.stringify(lista));
+
+  status.innerText = "Recibo salvo offline";
+
+  // ===== GERA QR CODE DO RECIBO =====
+  document.getElementById("qrcode").innerHTML = "";
+
+  const textoQR =
+    "Recibo Nº: " + numeroRecibo.value + "\n" +
+    "Data: " + data.value + "\n" +
+    "Produtor: " + produtor.value + "\n" +
+    "Valor: " + valor.value;
+
+  new QRCode(document.getElementById("qrcode"), {
+    text: textoQR,
+    width: 150,
+    height: 150
+  });
+}
+
 
     const recibo = {
       numeroRecibo: numeroRecibo.value,
