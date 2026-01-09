@@ -162,19 +162,27 @@ function salvar() {
 
   status.innerText = "Recibo salvo offline";
 
-  /* ========= QR CODE ========= */
-  qrcode.innerHTML = "";
-  const textoQR =
-    "Recibo Nº: " + recibo.numeroRecibo + "\n" +
-    "Data: " + recibo.data + "\n" +
-    "Produtor: " + recibo.produtor + "\n" +
-    "Valor: " + recibo.valor;
+/* ========= QR CODE ========= */
+const textoQR =
+  "Recibo Nº: " + recibo.numeroRecibo + "\n" +
+  "Data: " + recibo.data + "\n" +
+  "Produtor: " + recibo.produtor + "\n" +
+  "Valor: " + recibo.valor;
 
-  new QRCode(qrcode, {
-    text: textoQR,
-    width: 150,
-    height: 150
-  });
+const qrContainer = document.getElementById("qrcode");
+qrContainer.innerHTML = "";
+
+const qr = document.createElement("div");
+qrContainer.appendChild(qr);
+
+new QRCode(qr, {
+  text: textoQR,
+  width: 180,
+  height: 180,
+  correctLevel: QRCode.CorrectLevel.H
+});
+
+
 }
 
 /* ========= SINCRONIZAR ========= */
