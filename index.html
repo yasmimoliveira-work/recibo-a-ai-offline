@@ -69,6 +69,8 @@
 
 <p id="status"></p>
 
+  <div id="qrcode"></div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   
 <script>
@@ -202,6 +204,13 @@ async function sincronizar() {
 
   localStorage.setItem("recibos", JSON.stringify(lista));
   status.innerText = enviados ? "Sincronização concluída" : "Nada para sincronizar";
+
+  if (typeof QRCode === "undefined") {
+  alert("QRCode NÃO carregou");
+} else {
+  alert("QRCode OK");
+}
+
 }
 </script>
 
