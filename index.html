@@ -69,7 +69,8 @@
 
 <p id="status"></p>
 
-  <div id="qrcode"></div>
+  <div id="qrcode" style="min-width:180px; min-height:180px;"></div>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   
@@ -171,16 +172,19 @@ const textoQR =
 
 const qrContainer = document.getElementById("qrcode");
 qrContainer.innerHTML = "";
+qrContainer.style.display = "block";
 
-const qr = document.createElement("div");
-qrContainer.appendChild(qr);
+const qrDiv = document.createElement("div");
+qrContainer.appendChild(qrDiv);
 
-new QRCode(qr, {
+const qr = new QRCode(qrDiv, {
   text: textoQR,
   width: 180,
   height: 180,
+  useSVG: false,
   correctLevel: QRCode.CorrectLevel.H
 });
+
 
 
 }
