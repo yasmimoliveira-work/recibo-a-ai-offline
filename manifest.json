@@ -1,6 +1,6 @@
 {
   "name": "Recibo Digital Offline",
-  "short_name": "Recibo",
+  "short_name": "Recibo WAÇEI",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
